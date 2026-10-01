@@ -24,8 +24,7 @@ class Contact {
     }
     public function delete($id) {
         $this->db->prepare("UPDATE deals SET contact_id = NULL WHERE contact_id = :id")->execute(['id' => $id]);
-        
-        $this->db->prepare("DELETE FROM meetings WHERE contact_id = :id")->execute(['id' => $id]);
+        $this->db->prepare("UPDATE meetings SET contact_id = NULL WHERE contact_id = :id")->execute(['id' => $id]);
 
         $stmt = $this->db->prepare("DELETE FROM contacts WHERE id = :id");
         return $stmt->execute(['id' => $id]);

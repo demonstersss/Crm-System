@@ -37,4 +37,20 @@ class Deal {
         $stmt = $this->db->prepare("DELETE FROM deals WHERE id = :id");
         return $stmt->execute(['id' => $id]);
     }
+    public function getActiveDeals($userId = null, $limit = 5) {
+        $sql = "SELECT d.*, c.first_name, c.last_name 
+                FROM deals d 
+                LEFT JOIN contacts c ON d.contact_id = c.id 
+                WHERE d.status != 'closed'";
+        
+        if ($userId) {
+            $sql .= " AND d.manager_id = :uid";
+            $stmt = $this->db->prepare($sql . " ORDER BY d.created_at DESC LIMIT " . (int)$limit);
+            $stmt->execute(['uid' => $userId]);
+            return $stmt->fetchAll();
+        }
+        $stmt = $this->db->prepare($sql . " ORDER BY d.created_at DESC LIMIT " . (int)$limit);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
 }

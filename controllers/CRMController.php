@@ -83,9 +83,12 @@ class CRMController {
         $filterId = User::isAdmin() ? null : $_SESSION['user_id'];
         $deals = $dealModel->getAll($filterId);
 
+        $deals = $dealModel->getAll($filterId);
+
         foreach ($deals as &$deal) {
             $deal['notes'] = $noteModel->getByDeal($deal['id']);
         }
+        unset($deal); 
 
         $title = 'Управление сделками';
         $content = __DIR__ . '/../views/deals.php';
@@ -94,6 +97,7 @@ class CRMController {
 
     public function tasks() {
         $taskModel = new Task();
+        $meetingModel = new Meeting();
         $error = ''; $success = '';
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -103,18 +107,39 @@ class CRMController {
             } elseif (isset($_POST['complete_task'])) {
                 $taskModel->complete($_POST['task_id']);
                 $success = 'Задача выполнена!';
+            } elseif (isset($_POST['add_meeting'])) {
+                $meetingModel->create($_SESSION['user_id'], $_POST['contact_id'], $_POST['title'], $_POST['meeting_date']);
+                $success = 'Встреча успешно назначена.';
+            } elseif (isset($_POST['delete_meeting'])) {
+                $meeting = $meetingModel->getById($_POST['meeting_id']);
+                
+                if (strtotime($meeting['meeting_date']) < time()) {
+                    $error = 'Ошибка: Невозможно отменить уже прошедшую встречу!';
+                } else {
+                    if (User::isAdmin() || $meeting['user_id'] == $_SESSION['user_id']) {
+                        $meetingModel->delete($_POST['meeting_id']);
+                        $success = 'Встреча отменена.';
+                    } else {
+                        $error = 'Ошибка: Вы не можете отменять встречи других менеджеров!';
+                    }
+                }
             }
+            
         }
 
         $filterId = User::isAdmin() ? null : $_SESSION['user_id'];
         $tasks = $taskModel->getAll($filterId);
+        
+        $meetings = $meetingModel->getAll();
+        
+        $allContacts = $this->db->query("SELECT id, first_name, last_name FROM contacts")->fetchAll();
 
         $usersForAssign = [];
         if (User::isAdmin()) {
             $usersForAssign = $this->db->query("SELECT id, name FROM users")->fetchAll();
         }
 
-        $title = 'Задачи и Календарь';
+        $title = 'Задачи и Встречи';
         $content = __DIR__ . '/../views/tasks.php';
         require_once __DIR__ . '/../views/layout.php';
     }
@@ -131,6 +156,12 @@ class CRMController {
         if ($totalDeals > 0) {
             $conversion = round(($closedDeals / $totalDeals) * 100, 1);
         }
+        $dealModel = new Deal();
+        $meetingModel = new Meeting();
+
+        $activeDeals = $dealModel->getActiveDeals($filterId, 5);
+        
+        $upcomingMeetings = $meetingModel->getUpcoming(5);
 
         $title = 'Дашборд и Аналитика';
         $content = __DIR__ . '/../views/dashboard.php';
