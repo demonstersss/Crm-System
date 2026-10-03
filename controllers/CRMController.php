@@ -169,10 +169,30 @@ class CRMController {
     }
     public function users() {
         if (!User::isAdmin()) {
-            die('<div style="background:#111; color:#ff6b6b; padding:30px; text-align:center; font-family:sans-serif;">
-                    <h2>Доступ запрещен</h2><p>Управление сотрудниками доступно только Администратору.</p>
-                    <a href="index.php?action=dashboard" style="color:#d4af37;">Вернуться на главную</a>
-                 </div>');
+            $errorHtml = '
+            <!DOCTYPE html>
+            <html lang="ru">
+            <head>
+                <meta charset="UTF-8">
+                <title>Ошибка доступа</title>
+                <style>
+                    body { margin: 0; background-color: #121212; display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+                    .error-card { background: #1c1c1c; padding: 40px; border-radius: 8px; border-top: 4px solid #ff6b6b; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 400px; }
+                    .error-card h2 { color: #ff6b6b; margin-top: 0; }
+                    .error-card p { color: #aaa; margin-bottom: 25px; line-height: 1.5; }
+                    .error-btn { background: #007bff; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 4px; border: none; font-size: 14px; cursor: pointer; transition: 0.3s; }
+                    .error-btn:hover { background: #0056b3; }
+                </style>
+            </head>
+            <body>
+                <div class="error-card">
+                    <h2>Доступ запрещен</h2>
+                    <p>У вас недостаточно прав для просмотра этого раздела или выполнения данного действия. Обратитесь к администратору.</p>
+                    <a href="index.php?action=dashboard" class="error-btn">Вернуться на главную</a>
+                </div>
+            </body>
+            </html>';
+            die($errorHtml);
         }
 
         $userModel = new User();
